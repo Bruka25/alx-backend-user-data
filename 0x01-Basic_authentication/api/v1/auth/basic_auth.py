@@ -3,6 +3,8 @@
 """
 from .auth import Auth
 import re
+import base64
+import binascii
 
 
 class BasicAuth(Auth):
