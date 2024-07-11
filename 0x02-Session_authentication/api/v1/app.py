@@ -50,12 +50,14 @@ def verify_user():
             '/api/v1/status/',
             '/api/v1/unauthorized/',
             '/api/v1/forbidden/',
+            '/api/v1/auth_session/login/',
         ]
         if auth.require_auth(request.path, excluded_paths):
             auth_header = auth.authorization_header(request)
-            request.current_user = auth.current_user(request)
-            if auth_header is None:
+            session_cookie = auth.session_cookie(request)
+            if auth_header is None and session_cookie is None:
                 abort(401)
+            request.current_user = auth.current_user(request)
             if request.current_user is None:
                 abort(403)
 
