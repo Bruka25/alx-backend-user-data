@@ -48,7 +48,7 @@ class DB:
         session.commit()
         return new_user
 
-    def find_user_by(self, **kwargs) -> User:
+    def find_user_by(self, **kwargs):
         """Find a user by arbitrary keyword arguments
 
         Args:
