@@ -47,7 +47,7 @@ class DB:
         session.commit()
         return new_user
 
-    def find_user_by(self, **kwargs):
+    def find_user_by(self, **kwargs) -> User:
         """Find a user by arbitrary keyword arguments
 
         Args:
@@ -60,17 +60,16 @@ class DB:
             NoResultFound: If no user is found.
             InvalidRequestError: If invalid query arguments are passed.
         """
-        session = self._session
-        fields, values = [], []
-        for key, value in kwargs.items():
-            if hasattr(User, key):
-                fields.append(getattr(User, key))
-                values.append(value)
-            else:
+        attrs, vals = [], []
+        for attr, val in kwargs.items():
+            if not hasattr(User, attr):
                 raise InvalidRequestError()
-        result = session.query(User).filter(
-            tuple_(*fields).in_([tuple(values)])
-        ).first()
-        if result is None:
+            attrs.append(getattr(User, attr))
+            vals.append(val)
+
+        session = self._session
+        query = session.query(User)
+        user = query.filter(tuple_(*attrs).in_([tuple(vals)])).first()
+        if not user:
             raise NoResultFound()
-        return result
+        return user
