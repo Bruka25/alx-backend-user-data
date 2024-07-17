@@ -42,13 +42,10 @@ class DB:
         Returns:
             User: The newly created User object.
         """
-        try:
-            new_user = User(email=email, hashed_password=hashed_password)
-            self._session.add(new_user)
-            self._session.commit()
-        except Exception:
-            self._session.rollback()
-            new_user = None
+        session = self._session
+        new_user = User(email=email, hashed_password=hashed_password)
+        session.add(new_user)
+        session.commit()
         return new_user
 
     def find_user_by(self, **kwargs) -> User:
@@ -65,10 +62,16 @@ class DB:
             InvalidRequestError: If invalid query arguments are passed.
         """
         session = self._session
-        try:
-            user = session.query(User).filter_by(**kwargs).one()
-        except NoResultFound:
-            raise NoResultFound("No user found the given filter criteria.")
-        except InvalidRequestError:
-            raise InvalidRequestError("Invalid query arguments passed.")
-        return user
+        fields, values = [], []
+        for key, value in kwargs.items():
+            if hasattr(User, key):
+                fields.append(getattr(User, key))
+                values.append(value)
+            else:
+                raise InvalidRequestError()
+        result = session.query(User).filter(
+            tuple_(*fields).in_([tuple(values)])
+        ).first()
+        if result is None:
+            raise NoResultFound()
+        return result
