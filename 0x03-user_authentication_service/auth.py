@@ -7,6 +7,7 @@ import bcrypt
 from sqlalchemy.orm.exc import NoResultFound
 from db import DB, User
 
+
 class Auth:
     """Auth class to interact with the authentication database.
     """
