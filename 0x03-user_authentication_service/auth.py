@@ -2,10 +2,30 @@
 
 """Module for hashing passwords for authentication"""
 
-# auth.py
 import bcrypt
 from sqlalchemy.orm.exc import NoResultFound
 from db import DB, User
+from uuid import uuid4
+
+
+def _hash_password(password: str) -> bytes:
+    """Hash a password string
+
+    Args:
+        password (str): The password to hash.
+
+    Returns:
+        bytes: The salted hash of the password.
+    """
+    salt = bcrypt.gensalt()
+    hashed = bcrypt.hashpw(password.encode(), salt)
+    return hashed
+
+
+def _generate_uuid() -> str:
+    """Generates a UUID.
+    """
+    return str(uuid4())
 
 
 class Auth:
@@ -14,19 +34,6 @@ class Auth:
 
     def __init__(self):
         self._db = DB()
-
-    def _hash_password(self, password: str) -> bytes:
-        """Hash a password string
-
-        Args:
-            password (str): The password to hash.
-
-        Returns:
-            bytes: The salted hash of the password.
-        """
-        salt = bcrypt.gensalt()
-        hashed = bcrypt.hashpw(password.encode(), salt)
-        return hashed
 
     def register_user(self, email: str, password: str) -> User:
         """Register a new user
@@ -45,7 +52,7 @@ class Auth:
             self._db.find_user_by(email=email)
             raise ValueError(f"User {email} already exists")
         except NoResultFound:
-            hashed_password = self._hash_password(password)
+            hashed_password = _hash_password(password)
             user = self._db.add_user(email, hashed_password)
             return user
 
@@ -59,14 +66,8 @@ class Auth:
         Returns:
             bool: True if the login is valid, False otherwise.
         """
-        user = None
         try:
             user = self._db.find_user_by(email=email)
-            if user is not None:
-                return bcrypt.checkpw(
-                    password.encode("utf-8"),
-                    user.hashed_password,
-                )
+            return bcrypt.checkpw(password.encode(), user.hashed_password)
         except NoResultFound:
             return False
-        return False
