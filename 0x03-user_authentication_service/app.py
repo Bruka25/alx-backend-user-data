@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Basic Flask app with user registration
 """
-from flask import Flask, request, jsonify, abort, make_response
+from flask import Flask, request, jsonify, abort, make_response, redirect
 from auth import Auth
 from sqlalchemy.orm.exc import NoResultFound
 
@@ -50,6 +50,33 @@ def login():
     )
     response.set_cookie("session_id", session_id)
     return response
+
+
+@app.route("/sessions", methods=["DELETE"], strict_slashes=False)
+def logout() -> str:
+    """Handle logout functionality.
+
+    Method:
+        DELETE
+
+    Description:
+        Logs out the user by destroying their session.
+
+    Returns:
+        Redirects to the home route ("/").
+
+    Raises:
+        403 Forbidden: If the session ID is invalid or user is not
+                       authenticated.
+    """
+    session_id = request.cookies.get("session_id")
+    user = AUTH.get_user_from_session_id(session_id)
+
+    if user is None:
+        abort(403)
+
+    AUTH.destroy_session(user.id)
+    return redirect("/")
 
 
 if __name__ == "__main__":
